@@ -34,6 +34,122 @@ When a thread makes a kernel call:
 
 > Making a kernel call is similar to calling a normal library function.
 
+<details>
+<summary><strong>📖 More Details</strong></summary>
+
+## Overview
+
+When a thread makes a kernel call (like `MsgSend()`), it transitions from user mode to kernel mode. The **same thread** continues running — it just executes kernel code instead of user code.
+
+**Key Point:** No kernel thread takes over. Your thread does the work itself with elevated privileges.
+
+---
+
+## What Changes During a Kernel Call
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Privilege Level | User level | Kernel level |
+| Visible Address Space | Process only (/proc/PID/) | Process + procnto |
+| Stack in Use | User stack | Kernel stack |
+| Code Executing | Your application code | Microkernel code |
+| Privilege Level | User level | Kernel level |
+| Visible Address Space | Process only (`/proc/PID/`) | Process + procnto |
+| Stack in Use | User stack | Kernel stack |
+| Code Executing | Your application code | Microkernel code |
+
+---
+
+## What Stays the Same
+
+| Aspect | Value |
+|--------|-------|
+| Thread Running | Same thread |
+| Thread ID (TID) | Unchanged |
+| Thread Owner | Same process |
+| Thread Priority | Unchanged |
+| Scheduling Algorithm | Unchanged |
+| Can Be Preempted | Yes |
+
+---
+
+## Scenario Example
+
+**Setup:**
+- Process: `myprocess` (PID: 1234)
+- Thread: `mythread` (TID: 1)
+- Action: Calls `MsgSend("Hello")`
+
+**What Happens:**
+mythread runs user code
+│
+▼
+MsgSend("Hello") called
+│
+▼
+Privilege elevates to kernel level
+Stack switches to kernel stack
+procnto address space becomes visible
+│
+▼
+Kernel code executes (STILL mythread!)
+│
+▼
+Operation completes
+│
+▼
+Returns to user mode
+mythread continues user code
+text
+
+---
+
+## Does the Kernel Run or Stay Idle?
+
+**Answer:** Kernel CODE runs, kernel THREADS stay idle.
+
+| Component | Status During MsgSend() |
+|-----------|-------------------------|
+| Kernel Code | ✅ Running (inside mythread) |
+| IPI IST | 💤 Idle |
+| Timer IST | 💤 Idle |
+| Idle Thread | 💤 Idle |
+
+The microkernel is **externally driven** — it runs inside your thread, not separately.
+
+---
+
+## When Do Kernel Threads Actually Run?
+
+| Kernel Thread | Runs When |
+|---------------|-----------|
+| IPI IST | Another CPU core sends inter-processor interrupt |
+| Timer IST | Hardware timer fires an interrupt |
+| Idle Thread | No other threads need to run |
+
+---
+
+## Quick Reference
+
+| Question | Answer |
+|----------|--------|
+| What thread runs during kernel call? | Your thread |
+| Does a kernel thread take over? | No |
+| Does privilege level change? | Yes (user → kernel) |
+| Does stack change? | Yes (user → kernel stack) |
+| Does thread priority change? | No |
+| Can thread be preempted? | Yes |
+| Does kernel code execute? | Yes |
+| Do kernel threads run? | No (they stay idle) |
+
+---
+
+> *Kernel calls let your thread temporarily "borrow" kernel privileges to execute microkernel code. The kernel's dedicated threads remain asleep unless their specific events occur.*
+
+</details>
+
+
+
 ---
 
 ## Microkernel Characteristics
