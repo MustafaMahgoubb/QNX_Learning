@@ -73,6 +73,7 @@ When a thread makes a kernel call (like `MsgSend()`), it transitions from user m
 
 ---
 
+
 ## Scenario Example
 
 **Setup:**
@@ -82,25 +83,34 @@ When a thread makes a kernel call (like `MsgSend()`), it transitions from user m
 
 **What Happens:**
 mythread runs user code
-│
-▼
+
+        │
+        ▼
+
 MsgSend("Hello") called
-│
-▼
+
+        │
+        ▼
+
 Privilege elevates to kernel level
 Stack switches to kernel stack
 procnto address space becomes visible
-│
-▼
+
+        │
+        ▼
+
 Kernel code executes (STILL mythread!)
-│
-▼
+
+        │
+        ▼
+
 Operation completes
-│
-▼
+
+        │
+        ▼
+
 Returns to user mode
 mythread continues user code
-text
 
 ---
 
